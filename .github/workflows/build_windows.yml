@@ -38,6 +38,12 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Generate Flutter ephemeral files (expected to fail at CMake)
+        shell: pwsh
+        run: |
+          flutter build windows --release
+        continue-on-error: true
+
       - name: Build Windows (Release) with CMake directly
         shell: pwsh
         run: |
