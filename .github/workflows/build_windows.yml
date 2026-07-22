@@ -73,6 +73,8 @@ jobs:
           $iss = $iss.Replace('{{version}}', '${{ steps.version.outputs.version }}')
           $iss = $iss.Replace('{{root_path}}', $rootPath)
           $iss = $iss.Replace('build\windows\x64\runner\Release', 'build\windows\runner\Release')
+          # Remove ChineseSimplified language (missing from Inno Setup 6.7.1 on runner)
+          $iss = $iss -replace 'Name: "chinesesimplified".*\r?\n', ''
           Set-Content windows/build_temp.iss -Value $iss
           iscc windows/build_temp.iss
 
