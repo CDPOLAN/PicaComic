@@ -19,6 +19,12 @@ jobs:
       - name: Setup MSVC compiler
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Set CMake generator to VS 2022
+        shell: pwsh
+        run: |
+          echo "CMAKE_GENERATOR=Visual Studio 17 2022" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "CMAKE_GENERATOR_PLATFORM=x64" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Read version from pubspec
         id: version
         shell: pwsh
