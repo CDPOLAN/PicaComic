@@ -2,6 +2,10 @@
 cmake_minimum_required(VERSION 3.14)
 project(pica_comic LANGUAGES CXX)
 
+# Suppress deprecated experimental coroutine error on VS 18+.
+# local_auth_windows plugin uses the old /await + <experimental/coroutine>.
+add_compile_definitions(_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 set(BINARY_NAME "pica_comic")
