@@ -16,17 +16,6 @@ jobs:
           channel: stable
           flutter-version: 3.24.x
 
-      - name: Diagnostic - check CMake and available generators
-        shell: pwsh
-        run: |
-          cmake --version
-          echo "=== CMAKE_GENERATOR from env ==="
-          echo "CMAKE_GENERATOR=$env:CMAKE_GENERATOR"
-          echo "=== Available VS generators ==="
-          cmake --help | Select-String "Visual Studio"
-          echo "=== vswhere info ==="
-          & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest
-
       - name: Read version from pubspec
         id: version
         shell: pwsh
@@ -49,20 +38,20 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build Windows (Release)
+      - name: Build Windows (Release) with CMake directly
         shell: pwsh
         run: |
           $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
           Write-Host "VS path: $vsPath"
           & "$vsPath\Common7\Tools\VsDevCmd.bat" -arch=x64 -host_arch=x64 -no_logo
-          $env:CMAKE_GENERATOR = "Visual Studio 17 2022"
-          $env:CMAKE_GENERATOR_PLATFORM = "x64"
-          flutter build windows --release
+          Remove-Item -Path build/windows -Recurse -Force -ErrorAction SilentlyContinue
+          cmake -S windows/ -B build/windows/ -G "Visual Studio 18 2026" -A x64
+          cmake --build build/windows/ --config Release
 
       - name: Create ZIP package
         shell: pwsh
         run: |
-          Compress-Archive -Path build/windows/x64/runner/Release/* `
+          Compress-Archive -Path build/windows/runner/Release/* `
                            -DestinationPath "build/windows/PicaComic-${{ steps.version.outputs.version }}-windows-x64.zip"
 
       - name: Setup Inno Setup
@@ -77,6 +66,7 @@ jobs:
           $iss = Get-Content windows/build.iss -Raw
           $iss = $iss.Replace('{{version}}', '${{ steps.version.outputs.version }}')
           $iss = $iss.Replace('{{root_path}}', $rootPath)
+          $iss = $iss.Replace('build\windows\x64\runner\Release', 'build\windows\runner\Release')
           Set-Content windows/build_temp.iss -Value $iss
           iscc windows/build_temp.iss
 
