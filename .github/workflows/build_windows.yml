@@ -53,6 +53,7 @@ jobs:
           Remove-Item -Path build/windows -Recurse -Force -ErrorAction SilentlyContinue
           cmake -S windows/ -B build/windows/ -G "Visual Studio 18 2026" -A x64
           cmake --build build/windows/ --config Release
+          cmake --install build/windows/ --config Release
 
       - name: Create ZIP package
         shell: pwsh
