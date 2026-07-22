@@ -16,25 +16,16 @@ jobs:
           channel: stable
           flutter-version: 3.24.x
 
-      - name: Setup Visual Studio 17 (2022) env for CMake compatibility
+      - name: Diagnostic - check CMake and available generators
         shell: pwsh
         run: |
-          $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          Write-Host "VS path: $vsPath"
-          & "$vsPath\Common7\Tools\VsDevCmd.bat" -arch=x64 -host_arch=x64 -no_logo
-          Get-ChildItem env: | Where-Object {
-            $_.Name -in @(
-              'INCLUDE', 'LIB', 'LIBPATH', 'PATH',
-              'WindowsSdkDir', 'WindowsSDKVersion',
-              'UCRTVersion', 'UniversalCRTSdkDir',
-              'VCToolsInstallDir', 'VCToolsVersion',
-              'VSCMD_ARG_TGT_ARCH', 'VSCMD_ARG_HOST_ARCH'
-            )
-          } | ForEach-Object {
-            echo "$($_.Name)=$($_.Value)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          }
-          echo "CMAKE_GENERATOR=Visual Studio 17 2022" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          echo "CMAKE_GENERATOR_PLATFORM=x64" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          cmake --version
+          echo "=== CMAKE_GENERATOR from env ==="
+          echo "CMAKE_GENERATOR=$env:CMAKE_GENERATOR"
+          echo "=== Available VS generators ==="
+          cmake --help | Select-String "Visual Studio"
+          echo "=== vswhere info ==="
+          & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest
 
       - name: Read version from pubspec
         id: version
@@ -59,7 +50,14 @@ jobs:
         run: flutter pub get
 
       - name: Build Windows (Release)
-        run: flutter build windows --release
+        shell: pwsh
+        run: |
+          $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          Write-Host "VS path: $vsPath"
+          & "$vsPath\Common7\Tools\VsDevCmd.bat" -arch=x64 -host_arch=x64 -no_logo
+          $env:CMAKE_GENERATOR = "Visual Studio 17 2022"
+          $env:CMAKE_GENERATOR_PLATFORM = "x64"
+          flutter build windows --release
 
       - name: Create ZIP package
         shell: pwsh
